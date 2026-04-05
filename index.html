@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowMid — Trades Seguros de Skins CS2</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-primary: #06080D;
+  --bg-secondary: #0C1018;
+  --bg-card: #10141C;
+  --bg-card-hover: #151A25;
+  --accent-blue: #2D7FF9;
+  --accent-cyan: #00D4AA;
+  --accent-purple: #8B5CF6;
+  --accent-purple-light: #A78BFA;
+  --accent-gold: #F5A623;
+  --text-primary: #E8ECF1;
+  --text-secondary: #8B95A5;
+  --text-muted: #4A5568;
+  --border: rgba(255,255,255,0.06);
+  --glow-blue: rgba(45,127,249,0.15);
+  --glow-cyan: rgba(0,212,170,0.12);
+  --glow-purple: rgba(139,92,246,0.25);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999;
+}
+
+#particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+.grid-bg {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none; z-index: 0;
+  animation: gridFade 3s ease-out both;
+}
+@keyframes gridFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ═══ NAVBAR ═══ */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  padding: 0 40px; height: 72px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(6,8,13,0.6);
+  backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+  transform: translateY(-100%);
+  animation: slideNavIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+}
+@keyframes slideNavIn { to { transform: translateY(0); } }
+.navbar.scrolled { background: rgba(6,8,13,0.95); box-shadow: 0 4px 40px rgba(0,0,0,0.4); }
+
+.nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.nav-logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: white;
+  box-shadow: 0 0 20px var(--glow-purple);
+  animation: logoSpin 0.6s cubic-bezier(0.16,1,0.3,1) 0.5s both;
+}
+@keyframes logoSpin { from { transform: rotateY(90deg); opacity: 0; } to { transform: rotateY(0); opacity: 1; } }
+.nav-logo-text { font-weight: 700; font-size: 18px; color: var(--text-primary); letter-spacing: -0.02em; }
+.nav-logo-text span { color: var(--accent-cyan); }
+
+.nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+.nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s; position: relative; }
+.nav-links a:hover { color: var(--text-primary); }
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+  transition: width 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.nav-links a:hover::after { width: 100%; }
+
+.nav-cta {
+  padding: 10px 24px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  color: white !important; font-weight: 600 !important; font-size: 14px !important;
+  border: none; cursor: pointer; transition: all 0.3s; text-decoration: none;
+  box-shadow: 0 0 20px rgba(139,92,246,0.25); position: relative; overflow: hidden;
+}
+.nav-cta::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: translateX(-100%); transition: transform 0.6s;
+}
+.nav-cta:hover::before { transform: translateX(100%); }
+.nav-cta::after { display: none !important; }
+.nav-cta:hover { transform: translateY(-1px); box-shadow: 0 0 35px rgba(139,92,246,0.4); }
+
+/* ═══ HERO ═══ */
+.hero {
+  position: relative; min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 120px 40px 80px; overflow: hidden;
+}
+
+.hero-glow { position: absolute; border-radius: 50%; filter: blur(150px); pointer-events: none; }
+.hero-glow-1 { width: 800px; height: 800px; top: -300px; left: -200px; background: var(--accent-purple); opacity: 0.1; animation: glowOrbit1 12s ease-in-out infinite; }
+.hero-glow-2 { width: 600px; height: 600px; bottom: -200px; right: -150px; background: var(--accent-cyan); opacity: 0.07; animation: glowOrbit2 10s ease-in-out infinite; }
+.hero-glow-3 { width: 500px; height: 500px; top: 30%; left: 50%; background: var(--accent-blue); opacity: 0.05; animation: glowOrbit3 14s ease-in-out infinite; }
+
+@keyframes glowOrbit1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(60px,40px) scale(1.1)} 66%{transform:translate(-30px,60px) scale(.95)} }
+@keyframes glowOrbit2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-50px,-30px) scale(1.15)} 66%{transform:translate(40px,-50px) scale(.9)} }
+@keyframes glowOrbit3 { 0%,100%{transform:translate(-50%,0) scale(1);opacity:.05} 50%{transform:translate(-50%,-40px) scale(1.2);opacity:.08} }
+
+.hero-content { position: relative; z-index: 2; max-width: 900px; text-align: center; }
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 20px; border-radius: 100px;
+  background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.25);
+  font-size: 13px; font-weight: 600; color: var(--accent-purple-light);
+  margin-bottom: 32px; letter-spacing: 0.04em; text-transform: uppercase;
+  opacity: 0; animation: badgeReveal 0.8s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
+}
+@keyframes badgeReveal { from{opacity:0;transform:translateY(15px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+.hero-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-purple-light); box-shadow: 0 0 8px var(--accent-purple);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+
+.hero h1 {
+  font-size: clamp(42px, 6vw, 76px); font-weight: 800;
+  line-height: 1.05; letter-spacing: -0.035em; margin-bottom: 0;
+  opacity: 0; animation: heroTitleReveal 1s cubic-bezier(0.16,1,0.3,1) 0.8s forwards;
+}
+@keyframes heroTitleReveal { from{opacity:0;transform:translateY(40px);filter:blur(10px)} to{opacity:1;transform:translateY(0);filter:blur(0)} }
+
+.hero h1 .gradient-text {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+  background-size: 300% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: shimmer 5s linear infinite;
+}
+@keyframes shimmer { 0%{background-position:0% center} 100%{background-position:300% center} }
+
+/* ═══ HERO IMAGE — STATIC + PURPLE GLOW ═══ */
+.hero-image-wrapper {
+  position: relative; max-width: 520px; margin: 44px auto 44px;
+  opacity: 0; animation: imageReveal 1.2s cubic-bezier(0.16,1,0.3,1) 1s forwards;
+}
+@keyframes imageReveal { from{opacity:0;transform:scale(.9);filter:blur(15px)} to{opacity:1;transform:scale(1);filter:blur(0)} }
+
+.hero-image-wrapper::before {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 115%; height: 115%;
+  background: radial-gradient(ellipse, rgba(139,92,246,0.4) 0%, rgba(139,92,246,0.15) 35%, transparent 65%);
+  filter: blur(50px); z-index: -1;
+  animation: purpleGlowPulse 4s ease-in-out infinite;
+}
+@keyframes purpleGlowPulse {
+  0%,100%{opacity:.8;transform:translate(-50%,-50%) scale(1)}
+  50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}
+}
+
+.hero-image-wrapper::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 80%; height: 80%;
+  background: radial-gradient(ellipse, rgba(139,92,246,0.55) 0%, transparent 55%);
+  filter: blur(70px); z-index: -1;
+}
+
+.hero-image-wrapper img {
+  width: 100%; height: auto; position: relative; z-index: 1;
+  filter: drop-shadow(0 0 50px rgba(139,92,246,0.45)) drop-shadow(0 25px 70px rgba(139,92,246,0.25));
+}
+
+.hero p {
+  font-size: clamp(16px, 2vw, 20px); line-height: 1.7;
+  color: var(--text-secondary); max-width: 620px; margin: 0 auto 48px;
+  opacity: 0; animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 1.2s forwards;
+}
+
+.hero-actions {
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  opacity: 0; animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 1.4s forwards;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+
+.btn-primary {
+  padding: 16px 36px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  color: white; font-family: inherit; font-size: 16px; font-weight: 700;
+  border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 4px 25px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+  position: relative; overflow: hidden;
+}
+.btn-primary::before {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transition: left 0.5s;
+}
+.btn-primary:hover::before { left: 100%; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 40px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.15); }
+
+.btn-secondary {
+  padding: 16px 36px; border-radius: 12px; background: transparent;
+  color: var(--text-primary); font-family: inherit; font-size: 16px; font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.12); cursor: pointer;
+  transition: all 0.3s; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.btn-secondary:hover { border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.05); box-shadow: 0 0 30px rgba(139,92,246,0.1); }
+
+/* ═══ ANIMATED SEPARATORS ═══ */
+.line-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-purple), var(--accent-cyan), var(--accent-purple), transparent);
+  background-size: 200% 100%;
+  animation: lineSweep 4s linear infinite;
+}
+@keyframes lineSweep { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ═══ STATS BAR ═══ */
+.stats-bar {
+  position: relative; z-index: 2; padding: 50px 40px;
+  display: flex; justify-content: center; gap: 80px;
+  background: rgba(12,16,24,0.5); backdrop-filter: blur(10px);
+}
+.stat-item { text-align: center; }
+.stat-number {
+  font-size: 42px; font-weight: 800; letter-spacing: -0.03em;
+  font-family: 'Space Mono', monospace;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent-purple-light));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.stat-label { font-size: 12px; color: var(--text-muted); margin-top: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+.stat-bar {
+  width: 40px; height: 3px;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+  margin: 10px auto 0; border-radius: 2px;
+  transform: scaleX(0); transition: transform 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.stat-item.animated .stat-bar { transform: scaleX(1); }
+
+/* ═══ TRUST MARQUEE ═══ */
+.trust-bar { padding: 40px 0; overflow: hidden; position: relative; z-index: 2; }
+.trust-track { display: flex; gap: 60px; animation: marquee 30s linear infinite; width: max-content; }
+.trust-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-muted); font-weight: 500; white-space: nowrap; transition: color 0.3s; }
+.trust-item:hover { color: var(--accent-purple-light); }
+.trust-item .icon { font-size: 18px; }
+@keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+/* ═══ SECTIONS ═══ */
+section { position: relative; z-index: 2; padding: 120px 40px; }
+.section-label {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;
+  color: var(--accent-purple-light); margin-bottom: 16px;
+  font-family: 'Space Mono', monospace;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.section-label::before {
+  content: ''; width: 20px; height: 2px;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+  display: inline-block; animation: labelLine 2s ease-in-out infinite;
+}
+@keyframes labelLine { 0%,100%{width:20px} 50%{width:35px} }
+.section-title { font-size: clamp(32px, 4vw, 48px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 20px; }
+.section-desc { font-size: 17px; line-height: 1.7; color: var(--text-secondary); max-width: 560px; }
+
+/* ═══ HOW IT WORKS ═══ */
+.how-it-works { max-width: 1200px; margin: 0 auto; }
+.how-header { text-align: center; margin-bottom: 80px; }
+.how-header .section-desc { margin: 0 auto; }
+
+.steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; position: relative; }
+.steps-connector { position: absolute; top: 55px; left: 12.5%; right: 12.5%; height: 2px; overflow: hidden; }
+.steps-connector::after {
+  content: ''; display: block; width: 100%; height: 100%;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan), var(--accent-purple));
+  background-size: 200% 100%; animation: connectorFlow 3s linear infinite;
+}
+@keyframes connectorFlow { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+.step-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 36px 28px; text-align: center;
+  transition: all 0.5s cubic-bezier(0.16,1,0.3,1); position: relative; overflow: hidden;
+}
+.step-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: 16px;
+  background: radial-gradient(circle at 50% 0%, rgba(139,92,246,0.06), transparent 60%);
+  opacity: 0; transition: opacity 0.5s;
+}
+.step-card:hover::before { opacity: 1; }
+.step-card::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-purple), transparent);
+  transition: left 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.step-card:hover::after { left: 140%; }
+.step-card:hover { border-color: rgba(139,92,246,0.25); transform: translateY(-6px); box-shadow: 0 25px 60px rgba(0,0,0,0.3), 0 0 40px rgba(139,92,246,0.08); }
+
+.step-number {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: white;
+  margin: 0 auto 24px; position: relative; z-index: 1;
+  box-shadow: 0 0 30px var(--glow-purple);
+  transition: transform 0.4s, box-shadow 0.4s;
+}
+.step-card:hover .step-number { transform: scale(1.1) rotate(-5deg); box-shadow: 0 0 50px var(--glow-purple); }
+.step-icon { font-size: 36px; margin-bottom: 16px; transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+.step-card:hover .step-icon { transform: scale(1.25); }
+.step-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 12px; }
+.step-card p { font-size: 14px; line-height: 1.6; color: var(--text-secondary); }
+
+/* ═══ FEATURES ═══ */
+.features {
+  max-width: 1200px; margin: 0 auto; background: var(--bg-secondary);
+  border-radius: 24px; border: 1px solid var(--border); padding: 80px;
+  position: relative; overflow: hidden;
+}
+.features-bg-orb { position: absolute; border-radius: 50%; filter: blur(120px); pointer-events: none; }
+.features-bg-orb.orb-1 { width: 400px; height: 400px; top: -100px; right: -100px; background: var(--accent-purple); opacity: 0.06; animation: orbFloat 8s ease-in-out infinite; }
+.features-bg-orb.orb-2 { width: 300px; height: 300px; bottom: -80px; left: -50px; background: var(--accent-cyan); opacity: 0.04; animation: orbFloat 10s ease-in-out infinite 3s; }
+@keyframes orbFloat { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-20px)} }
+
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 60px; }
+
+.feature-card {
+  padding: 32px; border-radius: 16px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.015); transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+  position: relative; overflow: hidden;
+}
+.feature-card .card-shine {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(139,92,246,0.08) 0%, transparent 50%);
+  opacity: 0; transition: opacity 0.4s; pointer-events: none;
+}
+.feature-card:hover .card-shine { opacity: 1; }
+.feature-card:hover { border-color: rgba(139,92,246,0.2); transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+
+.feature-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin-bottom: 20px;
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.feature-card:hover .feature-icon { transform: scale(1.1) rotate(-5deg); background: rgba(139,92,246,0.12); box-shadow: 0 0 25px rgba(139,92,246,0.15); }
+.feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+.feature-card p { font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
+
+/* ═══ SECURITY ═══ */
+.security { max-width: 1200px; margin: 0 auto; }
+.security-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+.security-visual { position: relative; height: 500px; display: flex; align-items: center; justify-content: center; }
+
+.security-ring { position: absolute; border-radius: 50%; border: 1px dashed; }
+.ring-1 { width: 320px; height: 320px; border-color: rgba(139,92,246,0.2); animation: rotateRing 25s linear infinite; }
+.ring-2 { width: 230px; height: 230px; border-color: rgba(0,212,170,0.18); animation: rotateRing 18s linear infinite reverse; }
+.ring-3 { width: 150px; height: 150px; border-color: rgba(45,127,249,0.18); animation: rotateRing 12s linear infinite; }
+@keyframes rotateRing { to { transform: rotate(360deg); } }
+
+.ring-dot { position: absolute; width: 10px; height: 10px; border-radius: 50%; top: -5px; left: 50%; margin-left: -5px; }
+.ring-1 .ring-dot { background: var(--accent-purple); box-shadow: 0 0 15px var(--accent-purple), 0 0 40px rgba(139,92,246,0.3); }
+.ring-2 .ring-dot { background: var(--accent-cyan); box-shadow: 0 0 15px var(--accent-cyan), 0 0 40px rgba(0,212,170,0.3); }
+.ring-3 .ring-dot { background: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue), 0 0 40px rgba(45,127,249,0.3); }
+
+.security-core {
+  width: 76px; height: 76px; border-radius: 20px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  display: flex; align-items: center; justify-content: center; font-size: 34px;
+  box-shadow: 0 0 60px var(--glow-purple), 0 0 120px rgba(139,92,246,0.15);
+  position: relative; z-index: 2; animation: corePulse 3s ease-in-out infinite;
+}
+@keyframes corePulse {
+  0%,100%{box-shadow:0 0 60px var(--glow-purple),0 0 120px rgba(139,92,246,0.15)}
+  50%{box-shadow:0 0 80px var(--glow-purple),0 0 160px rgba(139,92,246,0.25)}
+}
+
+.security-list { list-style: none; margin-top: 40px; display: flex; flex-direction: column; gap: 16px; }
+.security-list li {
+  display: flex; align-items: flex-start; gap: 16px; padding: 20px;
+  border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card);
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1); position: relative; overflow: hidden;
+}
+.security-list li::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, var(--accent-purple), var(--accent-cyan));
+  transform: scaleY(0); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); transform-origin: top;
+}
+.security-list li:hover::before { transform: scaleY(1); }
+.security-list li:hover { border-color: rgba(139,92,246,0.15); background: var(--bg-card-hover); transform: translateX(4px); }
+.security-check {
+  width: 30px; height: 30px; border-radius: 8px; background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.2); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: var(--accent-purple-light); font-size: 14px; font-weight: 700;
+}
+.security-list h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.security-list p { font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+
+/* ═══ PRICING ═══ */
+.pricing { max-width: 800px; margin: 0 auto; text-align: center; }
+.pricing-card {
+  margin-top: 60px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 24px; padding: 60px; position: relative; overflow: hidden;
+}
+.pricing-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan), var(--accent-blue));
+  background-size: 200% 100%; animation: lineSweep 4s linear infinite;
+}
+.pricing-glow {
+  position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+  width: 400px; height: 300px; background: var(--accent-purple);
+  border-radius: 50%; filter: blur(150px); opacity: 0.06; pointer-events: none;
+}
+.pricing-amount { display: flex; align-items: baseline; justify-content: center; gap: 4px; margin-bottom: 12px; }
+.pricing-amount .number {
+  font-size: 72px; font-weight: 800; font-family: 'Space Mono', monospace; letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent-purple-light));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.pricing-amount .unit { font-size: 20px; color: var(--text-secondary); font-weight: 600; }
+.pricing-subtitle { font-size: 16px; color: var(--text-secondary); margin-bottom: 40px; }
+.pricing-features { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 40px; text-align: left; }
+.pricing-feature {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px;
+  background: rgba(139,92,246,0.03); border: 1px solid rgba(139,92,246,0.06);
+  font-size: 14px; color: var(--text-secondary); transition: all 0.3s;
+}
+.pricing-feature:hover { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.12); color: var(--text-primary); }
+.pricing-feature .check { color: var(--accent-cyan); font-weight: 700; font-size: 16px; }
+
+/* ═══ FAQ ═══ */
+.faq { max-width: 800px; margin: 0 auto; }
+.faq-header { text-align: center; margin-bottom: 60px; }
+.faq-header .section-desc { margin: 0 auto; }
+.faq-list { display: flex; flex-direction: column; gap: 12px; }
+.faq-item { border: 1px solid var(--border); border-radius: 14px; background: var(--bg-card); overflow: hidden; transition: all 0.4s; }
+.faq-item:hover { border-color: rgba(139,92,246,0.15); }
+.faq-item.open { border-color: rgba(139,92,246,0.2); box-shadow: 0 0 30px rgba(139,92,246,0.05); }
+.faq-question { padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 16px; font-weight: 600; transition: color 0.3s; user-select: none; }
+.faq-question:hover { color: var(--accent-purple-light); }
+.faq-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; color: var(--text-muted); transition: all 0.4s cubic-bezier(0.16,1,0.3,1); }
+.faq-item.open .faq-icon { background: rgba(139,92,246,0.15); color: var(--accent-purple-light); transform: rotate(45deg); }
+.faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.16,1,0.3,1); }
+.faq-item.open .faq-answer { max-height: 300px; }
+.faq-answer-inner { padding: 0 28px 24px; font-size: 15px; line-height: 1.7; color: var(--text-secondary); }
+
+/* ═══ CTA ═══ */
+.cta-section { max-width: 1200px; margin: 0 auto; text-align: center; }
+.cta-box {
+  background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(0,212,170,0.03));
+  border: 1px solid rgba(139,92,246,0.15); border-radius: 24px; padding: 80px 60px;
+  position: relative; overflow: hidden;
+}
+.cta-box::before {
+  content: ''; position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 400px; background: var(--accent-purple);
+  border-radius: 50%; filter: blur(200px); opacity: 0.07; animation: orbFloat 10s ease-in-out infinite;
+}
+.cta-box .section-title, .cta-box .section-desc, .cta-box .hero-actions { position: relative; z-index: 2; }
+.cta-box .section-desc { margin: 0 auto 40px; }
+
+/* ═══ FOOTER ═══ */
+.footer { position: relative; z-index: 2; border-top: 1px solid var(--border); padding: 60px 40px 40px; }
+.footer-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+.footer-brand { display: flex; align-items: center; gap: 10px; }
+.footer-brand-icon { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: white; }
+.footer-brand span { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+.footer-links { display: flex; gap: 32px; list-style: none; }
+.footer-links a { color: var(--text-muted); text-decoration: none; font-size: 13px; transition: color 0.3s; }
+.footer-links a:hover { color: var(--accent-purple-light); }
+.footer-copy { font-size: 13px; color: var(--text-muted); }
+
+/* ═══ REVEALS ═══ */
+.reveal { opacity: 0; transform: translateY(50px); transition: all 0.9s cubic-bezier(0.16,1,0.3,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-left { opacity: 0; transform: translateX(-60px); transition: all 0.9s cubic-bezier(0.16,1,0.3,1); }
+.reveal-left.visible { opacity: 1; transform: translateX(0); }
+.reveal-right { opacity: 0; transform: translateX(60px); transition: all 0.9s cubic-bezier(0.16,1,0.3,1); }
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
+.reveal-scale { opacity: 0; transform: scale(0.9); transition: all 0.9s cubic-bezier(0.16,1,0.3,1); }
+.reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+.stagger-children > *:nth-child(1){transition-delay:0s} .stagger-children > *:nth-child(2){transition-delay:.1s}
+.stagger-children > *:nth-child(3){transition-delay:.2s} .stagger-children > *:nth-child(4){transition-delay:.3s}
+.stagger-children > *:nth-child(5){transition-delay:.4s} .stagger-children > *:nth-child(6){transition-delay:.5s}
+
+/* ═══ CURSOR DOT ═══ */
+.cursor-dot {
+  position: fixed; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent-purple); pointer-events: none; z-index: 9998;
+  opacity: 0; transition: opacity 0.3s; mix-blend-mode: screen;
+  box-shadow: 0 0 15px var(--accent-purple);
+}
+body:hover .cursor-dot { opacity: 0.6; }
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent-purple), var(--accent-cyan)); border-radius: 3px; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 1024px) {
+  .steps-grid { grid-template-columns: repeat(2, 1fr); }
+  .steps-connector { display: none; }
+  .features { padding: 60px 40px; }
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+  .security-layout { grid-template-columns: 1fr; gap: 40px; }
+  .security-visual { height: 350px; }
+  .stats-bar { gap: 40px; flex-wrap: wrap; }
+}
+@media (max-width: 768px) {
+  .navbar { padding: 0 20px; }
+  .nav-links { display: none; }
+  section { padding: 80px 20px; }
+  .hero { padding: 100px 20px 60px; }
+  .hero-actions { flex-direction: column; width: 100%; }
+  .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+  .steps-grid { grid-template-columns: 1fr; }
+  .features { padding: 40px 24px; border-radius: 16px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .pricing-card { padding: 40px 24px; }
+  .pricing-features { grid-template-columns: 1fr; }
+  .cta-box { padding: 60px 24px; }
+  .footer-content { flex-direction: column; gap: 20px; text-align: center; }
+  .stats-bar { gap: 24px; padding: 30px 20px; }
+  .cursor-dot { display: none; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div class="grid-bg"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<nav class="navbar" id="navbar">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">F</div>
+    <div class="nav-logo-text">Flow<span>Mid</span></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#como-funciona">Como Funciona</a></li>
+    <li><a href="#recursos">Recursos</a></li>
+    <li><a href="#seguranca">Segurança</a></li>
+    <li><a href="#precos">Preços</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#comecar" class="nav-cta">Começar Agora</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-glow hero-glow-1"></div>
+  <div class="hero-glow hero-glow-2"></div>
+  <div class="hero-glow hero-glow-3"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Ecossistema Flow</div>
+    <h1>Trades de Skins<br><span class="gradient-text">com segurança total.</span></h1>
+    <div class="hero-image-wrapper">
+      <img src="https://static.wixstatic.com/media/874864_6fa988c8e7b645d797eff8defbfe5204~mv2.png/v1/fill/w_600,h_407,al_c,lg_1,q_85,enc_auto/874864_6fa988c8e7b645d797eff8defbfe5204~mv2.png" alt="CS2 Skins" />
+    </div>
+    <p>Intermediação profissional para compra e venda de skins CS2 no Brasil. Seu dinheiro protegido, sua skin garantida, zero risco de golpe.</p>
+    <div class="hero-actions">
+      <a href="#comecar" class="btn-primary"><span>🛡️</span> Iniciar Mediação</a>
+      <a href="#como-funciona" class="btn-secondary"><span>▶</span> Como Funciona</a>
+    </div>
+  </div>
+</section>
+
+<div class="line-separator"></div>
+
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-number" data-target="0" data-prefix="R$ ">R$ 0</div><div class="stat-label">Golpes Registrados</div><div class="stat-bar"></div></div>
+  <div class="stat-item"><div class="stat-number" data-target="100" data-suffix="%">0%</div><div class="stat-label">Taxa de Resolução</div><div class="stat-bar"></div></div>
+  <div class="stat-item"><div class="stat-number" data-target="30" data-prefix="<" data-suffix="min">0min</div><div class="stat-label">Tempo Médio</div><div class="stat-bar"></div></div>
+  <div class="stat-item"><div class="stat-number">24/7</div><div class="stat-label">Suporte Ativo</div><div class="stat-bar"></div></div>
+</div>
+
+<div class="line-separator"></div>
+
+<div class="trust-bar">
+  <div class="trust-track">
+    <div class="trust-item"><span class="icon">🔒</span> Escrow Seguro via PIX</div>
+    <div class="trust-item"><span class="icon">⚡</span> Mediação em Tempo Real</div>
+    <div class="trust-item"><span class="icon">🛡️</span> Proteção ao Comprador</div>
+    <div class="trust-item"><span class="icon">✅</span> Verificação de Inventário</div>
+    <div class="trust-item"><span class="icon">💎</span> Suporte a Skins Raras</div>
+    <div class="trust-item"><span class="icon">🇧🇷</span> 100% Brasileiro</div>
+    <div class="trust-item"><span class="icon">📱</span> WhatsApp Integrado</div>
+    <div class="trust-item"><span class="icon">🔗</span> Ecossistema Flow</div>
+    <div class="trust-item"><span class="icon">🔒</span> Escrow Seguro via PIX</div>
+    <div class="trust-item"><span class="icon">⚡</span> Mediação em Tempo Real</div>
+    <div class="trust-item"><span class="icon">🛡️</span> Proteção ao Comprador</div>
+    <div class="trust-item"><span class="icon">✅</span> Verificação de Inventário</div>
+    <div class="trust-item"><span class="icon">💎</span> Suporte a Skins Raras</div>
+    <div class="trust-item"><span class="icon">🇧🇷</span> 100% Brasileiro</div>
+    <div class="trust-item"><span class="icon">📱</span> WhatsApp Integrado</div>
+    <div class="trust-item"><span class="icon">🔗</span> Ecossistema Flow</div>
+  </div>
+</div>
+
+<section id="como-funciona">
+  <div class="how-it-works">
+    <div class="how-header reveal">
+      <div class="section-label">Como Funciona</div>
+      <div class="section-title">Simples. Rápido. Seguro.</div>
+      <div class="section-desc">Em 4 passos sua negociação está protegida do início ao fim.</div>
+    </div>
+    <div class="steps-grid stagger-children">
+      <div class="steps-connector"></div>
+      <div class="step-card reveal"><div class="step-number">1</div><div class="step-icon">📋</div><h3>Abrir Mediação</h3><p>Comprador ou vendedor cria a sala de mediação com os detalhes da skin e valor acordado.</p></div>
+      <div class="step-card reveal"><div class="step-number">2</div><div class="step-icon">💰</div><h3>Depósito em Escrow</h3><p>Comprador deposita o valor via PIX. O dinheiro fica retido na plataforma até a conclusão.</p></div>
+      <div class="step-card reveal"><div class="step-number">3</div><div class="step-icon">🔄</div><h3>Envio da Skin</h3><p>Vendedor envia a trade offer. Nosso sistema valida automaticamente item, float e stickers.</p></div>
+      <div class="step-card reveal"><div class="step-number">4</div><div class="step-icon">✅</div><h3>Liberação</h3><p>Skin confirmada no inventário? Dinheiro liberado ao vendedor instantaneamente.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="recursos">
+  <div class="features reveal-scale">
+    <div class="features-bg-orb orb-1"></div>
+    <div class="features-bg-orb orb-2"></div>
+    <div class="section-label">Recursos</div>
+    <div class="section-title">Tudo que você precisa<br>para negociar sem medo.</div>
+    <div class="features-grid stagger-children">
+      <div class="feature-card reveal"><div class="card-shine"></div><div class="feature-icon">🔍</div><h3>Inspeção Automática</h3><p>Verificamos float value, pattern index, stickers e condição da skin automaticamente antes de liberar.</p></div>
+      <div class="feature-card reveal"><div class="card-shine"></div><div class="feature-icon">💱</div><h3>Escrow PIX</h3><p>Dinheiro retido com segurança via PIX. Ninguém perde — ou a trade acontece, ou o valor volta.</p></div>
+      <div class="feature-card reveal"><div class="card-shine"></div><div class="feature-icon">⭐</div><h3>Sistema de Reputação</h3><p>Perfis verificados com histórico de trades, avaliações e nível de confiança visível.</p></div>
+      <div class="feature-card reveal"><div class="card-shine"></div><div class="feature-icon">💬</div><h3>Chat em Tempo Real</h3><p>Comunique-se diretamente com a outra parte dentro da sala de mediação, com registro completo.</p></div>
+      <div class="feature-card reveal"><div class="card-shine"></div><div class="feature-icon">📊</div><h3>Preço Justo</h3><p>Mostramos o preço médio da skin em múltiplas plataformas para garantir negociação justa.</p></div>
+      <div class="feature-card reveal"><div class="card-shine"></div><div class="feature-icon">🚨</div><h3>Disputa & Arbitragem</h3><p>Algum problema? Nossa equipe analisa as evidências e resolve a disputa de forma imparcial.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="seguranca">
+  <div class="security">
+    <div class="security-layout">
+      <div class="security-visual reveal-left">
+        <div class="security-ring ring-1"><div class="ring-dot"></div></div>
+        <div class="security-ring ring-2"><div class="ring-dot"></div></div>
+        <div class="security-ring ring-3"><div class="ring-dot"></div></div>
+        <div class="security-core">🛡️</div>
+      </div>
+      <div class="reveal-right">
+        <div class="section-label">Segurança</div>
+        <div class="section-title">Blindado contra<br>golpes.</div>
+        <div class="section-desc">Cada camada do sistema foi desenhada para eliminar qualquer possibilidade de fraude.</div>
+        <ul class="security-list stagger-children">
+          <li class="reveal"><div class="security-check">✓</div><div><h4>Verificação Steam</h4><p>Login obrigatório via Steam OpenID. Perfis verificados com histórico público.</p></div></li>
+          <li class="reveal"><div class="security-check">✓</div><div><h4>Validação de Inventário</h4><p>Confirmamos que o vendedor possui a skin antes mesmo de iniciar a mediação.</p></div></li>
+          <li class="reveal"><div class="security-check">✓</div><div><h4>Escrow Garantido</h4><p>Dinheiro só é liberado após confirmação bilateral. Zero possibilidade de calote.</p></div></li>
+          <li class="reveal"><div class="security-check">✓</div><div><h4>Registro Imutável</h4><p>Todas as ações, mensagens e trades são registradas com timestamp para auditoria.</p></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="precos">
+  <div class="pricing">
+    <div class="reveal">
+      <div class="section-label">Preços</div>
+      <div class="section-title">Transparente e justo.</div>
+      <div class="section-desc" style="margin:0 auto;">Sem mensalidade, sem pegadinha. Você só paga quando usa.</div>
+    </div>
+    <div class="pricing-card reveal-scale">
+      <div class="pricing-glow"></div>
+      <div class="pricing-amount"><span class="number">5</span><span class="unit">% por mediação</span></div>
+      <div class="pricing-subtitle">Cobrado do valor total da transação, dividido entre comprador e vendedor.</div>
+      <div class="pricing-features stagger-children">
+        <div class="pricing-feature reveal"><span class="check">✓</span> Escrow PIX incluso</div>
+        <div class="pricing-feature reveal"><span class="check">✓</span> Inspeção automática</div>
+        <div class="pricing-feature reveal"><span class="check">✓</span> Chat em tempo real</div>
+        <div class="pricing-feature reveal"><span class="check">✓</span> Suporte por WhatsApp</div>
+        <div class="pricing-feature reveal"><span class="check">✓</span> Arbitragem inclusa</div>
+        <div class="pricing-feature reveal"><span class="check">✓</span> Sem mensalidade</div>
+      </div>
+      <a href="#comecar" class="btn-primary" style="width:100%;justify-content:center;">Começar Agora — É Grátis pra Cadastrar</a>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="faq">
+    <div class="faq-header reveal">
+      <div class="section-label">FAQ</div>
+      <div class="section-title">Perguntas Frequentes</div>
+      <div class="section-desc">Tudo que você precisa saber antes de começar.</div>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item reveal"><div class="faq-question" onclick="toggleFaq(this)">O que acontece se o vendedor não enviar a skin?<div class="faq-icon">+</div></div><div class="faq-answer"><div class="faq-answer-inner">Se o vendedor não enviar a trade offer dentro do prazo estabelecido, o valor em escrow é devolvido integralmente ao comprador via PIX. Sem burocracia, sem demora.</div></div></div>
+      <div class="faq-item reveal"><div class="faq-question" onclick="toggleFaq(this)">Como funciona o sistema de escrow?<div class="faq-icon">+</div></div><div class="faq-answer"><div class="faq-answer-inner">O comprador deposita o valor via PIX na plataforma. O dinheiro fica retido até que a skin seja enviada, recebida e verificada no inventário do comprador. Só então liberamos o pagamento ao vendedor.</div></div></div>
+      <div class="faq-item reveal"><div class="faq-question" onclick="toggleFaq(this)">Quais skins são aceitas?<div class="faq-icon">+</div></div><div class="faq-answer"><div class="faq-answer-inner">Aceitamos todas as skins tradáveis do CS2 — desde skins comuns até facas, luvas e itens raros como Case Hardened Blue Gem e Crimson Web. Não há valor mínimo para mediação.</div></div></div>
+      <div class="faq-item reveal"><div class="faq-question" onclick="toggleFaq(this)">Como abro uma disputa?<div class="faq-icon">+</div></div><div class="faq-answer"><div class="faq-answer-inner">Dentro da sala de mediação existe um botão "Abrir Disputa". Nossa equipe analisa todo o histórico de mensagens, screenshots e dados do trade para tomar uma decisão justa em até 24h.</div></div></div>
+      <div class="faq-item reveal"><div class="faq-question" onclick="toggleFaq(this)">FlowMid faz parte do FlowSkins?<div class="faq-icon">+</div></div><div class="faq-answer"><div class="faq-answer-inner">Sim! FlowMid é parte do ecossistema Flow. Você usa o mesmo login para acessar FlowSkins (gestão de trading), FlowStore (loja) e FlowMid (trades seguros). Tudo integrado.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="comecar">
+  <div class="cta-section">
+    <div class="cta-box reveal-scale">
+      <div class="section-title">Pronto pra negociar<br>sem preocupação?</div>
+      <div class="section-desc">Cadastre-se em 30 segundos com sua conta Steam e faça sua primeira mediação hoje.</div>
+      <div class="hero-actions"><a href="#" class="btn-primary" style="font-size:18px;padding:18px 44px;">🛡️ Criar Conta Grátis</a></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-content">
+    <div class="footer-brand"><div class="footer-brand-icon">F</div><span>FlowMid — Ecossistema Flow</span></div>
+    <ul class="footer-links"><li><a href="#">Termos de Uso</a></li><li><a href="#">Política de Privacidade</a></li><li><a href="#">Contato</a></li></ul>
+    <div class="footer-copy">© 2026 Flow. Todos os direitos reservados.</div>
+  </div>
+</footer>
+
+<script>
+// ═══ PARTICLE SYSTEM ═══
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let mouse = { x: 0, y: 0 };
+
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.4;
+    this.speedY = (Math.random() - 0.5) * 0.4;
+    this.opacity = Math.random() * 0.4 + 0.1;
+    this.color = Math.random() > 0.5 ? '139,92,246' : '0,212,170';
+    this.pulseSpeed = Math.random() * 0.02 + 0.005;
+    this.pulseOffset = Math.random() * Math.PI * 2;
+  }
+  update(t) {
+    this.x += this.speedX; this.y += this.speedY;
+    const dx = this.x - mouse.x, dy = this.y - mouse.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 120) { this.x += dx / dist * 1.5; this.y += dy / dist * 1.5; }
+    if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+    if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+    this.currentOpacity = this.opacity * (0.6 + 0.4 * Math.sin(t * this.pulseSpeed + this.pulseOffset));
+  }
+  draw() {
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${this.color},${this.currentOpacity})`; ctx.fill();
+  }
+}
+
+for (let i = 0; i < 70; i++) particles.push(new Particle());
+
+let frame = 0;
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height); frame++;
+  particles.forEach(p => { p.update(frame); p.draw(); });
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 100) {
+        ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(139,92,246,${0.06 * (1 - dist / 100)})`; ctx.lineWidth = 0.5; ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// ═══ CURSOR ═══
+const cursorDot = document.getElementById('cursorDot');
+document.addEventListener('mousemove', (e) => {
+  mouse.x = e.clientX; mouse.y = e.clientY;
+  cursorDot.style.left = e.clientX - 4 + 'px'; cursorDot.style.top = e.clientY - 4 + 'px';
+  const x = (e.clientX / window.innerWidth - 0.5) * 40;
+  const y = (e.clientY / window.innerHeight - 0.5) * 40;
+  document.querySelectorAll('.hero-glow').forEach((g, i) => {
+    const f = [1, -0.7, 0.5][i] || 1;
+    g.style.transform = `translate(${x * f}px, ${y * f}px)`;
+  });
+});
+
+// ═══ FEATURE CARD SHINE ═══
+document.querySelectorAll('.feature-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--x', ((e.clientX - r.left) / r.width) * 100 + '%');
+    card.style.setProperty('--y', ((e.clientY - r.top) / r.height) * 100 + '%');
+  });
+});
+
+// ═══ NAVBAR ═══
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', window.scrollY > 50); });
+
+// ═══ SCROLL REVEAL ═══
+const revealAll = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); revealObserver.unobserve(entry.target); } });
+}, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+revealAll.forEach(el => revealObserver.observe(el));
+
+// ═══ COUNTER ANIMATION ═══
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) { animateStats(); statsObserver.unobserve(entry.target); } });
+}, { threshold: 0.5 });
+statsObserver.observe(document.querySelector('.stats-bar'));
+
+function animateStats() {
+  document.querySelectorAll('.stat-item').forEach((item, i) => {
+    setTimeout(() => {
+      item.classList.add('animated');
+      const numEl = item.querySelector('.stat-number');
+      const target = parseInt(numEl.dataset.target);
+      const prefix = numEl.dataset.prefix || '';
+      const suffix = numEl.dataset.suffix || '';
+      if (isNaN(target)) return;
+      let current = 0; const step = target / (1500 / 16);
+      const counter = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(counter); }
+        numEl.textContent = prefix + Math.round(current) + suffix;
+      }, 16);
+    }, i * 150);
+  });
+}
+
+// ═══ FAQ ═══
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
+
+// ═══ MAGNETIC BUTTONS ═══
+document.querySelectorAll('.btn-primary, .btn-secondary').forEach(btn => {
+  btn.addEventListener('mousemove', (e) => {
+    const r = btn.getBoundingClientRect();
+    btn.style.transform = `translate(${(e.clientX - r.left - r.width/2) * 0.12}px, ${(e.clientY - r.top - r.height/2) * 0.12}px)`;
+  });
+  btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+});
+
+// ═══ TILT ON STEP CARDS ═══
+document.querySelectorAll('.step-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    card.style.transform = `translateY(-6px) perspective(600px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg)`;
+  });
+  card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+});
+
+// ═══ SCROLL PROGRESS BAR ═══
+const progressBar = document.createElement('div');
+progressBar.style.cssText = 'position:fixed;top:0;left:0;height:3px;z-index:10000;background:linear-gradient(90deg,#8B5CF6,#00D4AA);transition:width 0.1s;width:0;';
+document.body.appendChild(progressBar);
+window.addEventListener('scroll', () => {
+  progressBar.style.width = (window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+
+</body>
+</html>
